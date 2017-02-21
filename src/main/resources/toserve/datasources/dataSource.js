@@ -80,7 +80,6 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
     });
   }
   $scope.getDataSources();
-
   $scope.getDatasource = function(id, index){
     for(var i=0; i<$scope.datasources.length ; i++){
       if($scope.datasources[i].id==id){
@@ -98,6 +97,7 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
     if($scope.forms.datasourceForm){
 	  $scope.forms.datasourceForm.$setPristine();
     }
+    hideDetails();
 	$scope.selectedDatasource = {
       "name"        : "",
       "id"          : "",
@@ -123,12 +123,12 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
 	      "duration":21600
 	    }
 	  },
-	  "updateTimeout":30,
+	  "updateTimeout":300,
 	  "enabled":false,
 	  "newHeader":{"name":"","value":""},
 	  "modifiedTimes":{
 	    "schedule"      : {"second":0 ,"minute":0, "hour": 6},
-	    "updateTimeout" : {"second":30,"minute":0, "hour": 0},
+	    "updateTimeout" : {"second":0,"minute":5, "hour": 0},
 	    "requestTimeout": {"second":30,"minute":0, "hour": 0}
 	  },
 	  "isNew":true
@@ -177,14 +177,17 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
     }
   }
   $scope.selectDatasource = function(id){
-	if($scope.forms.datasourceForm){
-	  $scope.forms.datasourceForm.$setPristine();
-	  $('.well').css('display','none');
+	if(!$scope.selectedDatasource || $scope.selectedDatasource.id != id){
+	  if($scope.forms.datasourceForm){
+	    $scope.forms.datasourceForm.$setPristine();
+	  }
+	  hideDetails();
+      var getDatasource = $scope.getDatasource(id);
+      if(getDatasource){
+        $scope.selectedDatasource = jQuery.extend(true, {}, getDatasource);
+        $timeout(function(){adjustHeight("#datasource-details", ".datasource-toolbar", true)},0);
+      }
 	}
-    var getDatasource = $scope.getDatasource(id);
-    if(getDatasource){
-      $scope.selectedDatasource = jQuery.extend(true, {}, getDatasource);
-    }
   }
   $scope.deleteDatasource = function(){
     $('#deleteModal').bsModal('show');
@@ -204,7 +207,7 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
   }
   $scope.toggleHeaders = function(idHeader, event){
     $('#'+idHeader).toggle(80);
-    $(event.currentTarget).find('.fa').toggleClass('fa-rotate-90');
+    $(event.currentTarget).find('.fa-chevron-right').toggleClass('fa-rotate-90');
   }
   $scope.toggleExample = function(event){
     $(event.currentTarget).parent().find('.example-help').toggle();
@@ -237,7 +240,8 @@ app.controller("datasourceCtrl", ['$scope', '$timeout', 'orderByFilter','$http',
     el.find('.fa').toggleClass('fa-rotate-90');
     el.parent().parent().find('.well').toggle();
   }
-  adjustHeight($scope.treeId);
+
+  adjustHeight($scope.treeId, false, true);
 }]);
 
 function convertFromSecond(time) {
@@ -269,8 +273,15 @@ function objToArray(obj){
   }
   return arr;
 }
-
+function hideDetails(){
+  $('.well').css('display','none');
+  $('#datasource-details form .fa-chevron-right').removeClass('fa-rotate-90');
+}
 $(document).ready(function(){
   angular.bootstrap('#datasource', ['datasource']);
+  $(window).on('resize',function(){
+    adjustHeight("#datasources-tree", false, true);
+    adjustHeight("#datasource-details", ".datasource-toolbar", true);
+  });
 });
 
